@@ -1,13 +1,13 @@
 import { createAxis, createY } from "@lib/helpers";
-import { Dimensions, Headers } from "@types";
+import { Headers, PlotDimensions } from "@types";
 import * as d3 from "d3";
-import { ScaleOrdinal } from "d3";
+import { scaleOrdinal } from "d3";
 import { FC, useEffect, useRef } from "react";
 
 interface BarGraphProps {
-  color: ScaleOrdinal<string, string, never>;
+  color: string[] | readonly string[];
   data: { name: string; value: number }[];
-  dimensions: Dimensions;
+  dimensions: PlotDimensions;
   headers: Headers;
 }
 
@@ -18,42 +18,22 @@ export const BarGraph: FC<BarGraphProps> = ({
   headers,
 }) => {
   const graphRef = useRef<SVGSVGElement>(null);
-  const legendRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    // build legend
-    const legend = d3.select(legendRef.current);
-    legend.selectAll("*").remove();
-    legend.attr("width", dimensions.width).attr("height", data.length * 32);
-    legend
-      .selectAll()
-      .data(data.map((d) => d.name))
-      .enter()
-      .append("rect")
-      .attr("height", 32)
-      .attr("width", 32)
-      .attr("y", (d, i) => 32 * i)
-      .attr("class", "legend__color")
-      .attr("fill", (d) => color(d));
-    legend
-      .selectAll()
-      .data(data.map((d) => d.name))
-      .enter()
-      .append("text")
-      .attr("x", 40)
-      .attr("y", (d, i) => 32 * i + 23)
-      .attr("class", "legend__label")
-      .text((d) => d);
-
-    // build graph
     const graph = d3.select(graphRef.current);
     graph.selectAll("*").remove();
     graph.attr("width", dimensions.width).attr("height", dimensions.height);
+
     const max = Math.max(...data.map((d) => d.value));
     const { margin, maxWidth, height, width, yScale } = createY(
       dimensions,
       max,
       graph
+    );
+
+    const colorScale = scaleOrdinal(
+      data.map((d) => d.name),
+      color
     );
 
     const xScale = d3
@@ -89,13 +69,8 @@ export const BarGraph: FC<BarGraphProps> = ({
       .attr("y", (d) => yScale(d.value))
       .attr("width", xScale.bandwidth())
       .attr("height", (d) => height - yScale(d.value))
-      .attr("fill", (d) => color(d.name));
+      .attr("fill", (d) => colorScale(d.name));
   }, [color, data, dimensions, headers]);
 
-  return (
-    <>
-      <svg ref={legendRef} />
-      <svg ref={graphRef} />
-    </>
-  );
+  return <svg ref={graphRef} />;
 };

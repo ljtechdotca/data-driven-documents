@@ -1,20 +1,17 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { createAxis, createY } from "@lib/helpers";
-import { Dimensions, Headers } from "@types";
-import * as d3 from "d3";
-import { scaleLinear, ScaleOrdinal, select } from "d3";
+import { Headers, PlotDimensions } from "@types";
+import { scaleLinear, scaleOrdinal, select, symbol, symbols } from "d3";
 import { FC, useEffect, useRef } from "react";
 
 interface ScatterPlotProps {
-  color: ScaleOrdinal<string, string, never>;
+  color: string[] | readonly string[];
   data: {
     category: string;
     x: number;
     y: number;
   }[];
-  dimensions: Dimensions;
+  dimensions: PlotDimensions;
   headers: Headers;
-  shape: ScaleOrdinal<string, string | null, never>;
 }
 
 export const ScatterPlot: FC<ScatterPlotProps> = ({
@@ -22,40 +19,10 @@ export const ScatterPlot: FC<ScatterPlotProps> = ({
   data,
   dimensions,
   headers,
-  shape,
 }) => {
   const graphRef = useRef<SVGSVGElement>(null);
-  const legendRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    // build legend
-
-    const categories = new Map(data.map((d) => [d.category, 1]));
-
-    const legend = select(legendRef.current);
-    legend.selectAll("*").remove();
-    legend.attr("width", dimensions.width).attr("height", categories.size * 32);
-    legend
-      .selectAll()
-      .data(categories.keys())
-      .enter()
-      .append("rect")
-      .attr("height", 32)
-      .attr("width", 32)
-      .attr("y", (d, i) => 32 * i)
-      .attr("class", "legend__color")
-      .attr("fill", (d) => color(d));
-    legend
-      .selectAll()
-      .data(categories.keys())
-      .enter()
-      .append("text")
-      .attr("x", 40)
-      .attr("y", (d, i) => 32 * i + 23)
-      .attr("class", "legend__label")
-      .text((d) => d);
-
-    //build graph
     const graph = select(graphRef.current);
     graph.selectAll("*").remove();
     graph
@@ -71,13 +38,20 @@ export const ScatterPlot: FC<ScatterPlotProps> = ({
       Math.min(...data.map((d) => d.y)),
       Math.max(...data.map((d) => d.y)),
     ];
-
     const { margin, maxWidth, height, width, yScale } = createY(
       dimensions,
       maxY,
       graph
     );
 
+    const colorScale = scaleOrdinal(
+      data.map((d) => d.category),
+      color
+    );
+    const shape = scaleOrdinal(
+      data.map((d) => d.category),
+      symbols.map((s) => symbol().type(s)())
+    );
     const xScale = scaleLinear().domain([minX, maxX]).range([0, width]);
     yScale.domain([minY, maxY]).range([height, 0]);
 
@@ -106,14 +80,9 @@ export const ScatterPlot: FC<ScatterPlotProps> = ({
       .data(data)
       .join("path")
       .attr("transform", (d) => `translate(${xScale(d.x)}, ${yScale(d.y)})`)
-      .attr("fill", (d) => color(d.category))
+      .attr("fill", (d) => colorScale(d.category))
       .attr("d", (d) => String(shape(d.category)));
   }, []);
 
-  return (
-    <>
-      <svg ref={legendRef} />
-      <svg ref={graphRef} />
-    </>
-  );
+  return <svg ref={graphRef} />;
 };

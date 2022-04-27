@@ -55,20 +55,15 @@ export const createAxis = ({
       .attr("stroke", "currentColor")
       .attr("stroke-opacity", 0.1)
       .call((g) => {
-        try {
-          const blah = g
-            .append("g")
-            .selectAll("line")
-            .data(xScale.ticks())
-            .join("line")
-            .attr("x1", (d) => 0.5 + xScale(d))
-            .attr("x2", (d) => 0.5 + xScale(d))
-            .attr("y1", 0)
-            .attr("y2", height);
-          return blah;
-        } catch (error) {
-          console.error("No can do chief.");
-        }
+        if (!xScale.ticks) return;
+        g.append("g")
+          .selectAll("line")
+          .data(xScale.ticks())
+          .join("line")
+          .attr("x1", (d) => 0.5 + xScale(d))
+          .attr("x2", (d) => 0.5 + xScale(d))
+          .attr("y1", 0)
+          .attr("y2", height);
       })
       .call((g) =>
         g

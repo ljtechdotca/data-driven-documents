@@ -1,15 +1,15 @@
 import { createAxis, createY } from "@lib/helpers";
-import { Dimensions, Headers } from "@types";
+import { Headers, PlotDimensions } from "@types";
 import * as d3 from "d3";
-import { ScaleOrdinal, select } from "d3";
+import { scaleOrdinal } from "d3";
 import { FC, useEffect, useRef } from "react";
 
 interface StackedBarGraphProps {
-  color: ScaleOrdinal<string, string, never>;
+  color: string[] | readonly string[];
   data: Record<string, any>[];
-  dimensions: Dimensions;
+  dimensions: PlotDimensions;
   headers: Headers;
-  keys: string[]
+  keys: string[];
 }
 
 export const StackedBarGraph: FC<StackedBarGraphProps> = ({
@@ -17,37 +17,11 @@ export const StackedBarGraph: FC<StackedBarGraphProps> = ({
   data,
   dimensions,
   headers,
-  keys
+  keys,
 }) => {
   const graphRef = useRef<SVGSVGElement>(null);
-  const legendRef= useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    // build legend
-    const legend = select(legendRef.current);
-    legend.selectAll("*").remove();
-    legend.attr("width", dimensions.width).attr("height", keys.length * 32);
-    legend
-      .selectAll()
-      .data(keys)
-      .enter()
-      .append("rect")
-      .attr("height", 32)
-      .attr("width", 32)
-      .attr("y", (d, i) => 32 * i)
-      .attr("class", "legend__color")
-      .attr("fill", (d) => color(d));
-    legend
-      .selectAll()
-      .data(keys)
-      .enter()
-      .append("text")
-      .attr("x", 40)
-      .attr("y", (d, i) => 32 * i + 23)
-      .attr("class", "legend__label")
-      .text((d) => d);
-
-    // build graph
     const graph = d3.select(graphRef.current);
     graph.selectAll("*").remove();
     graph
@@ -55,18 +29,21 @@ export const StackedBarGraph: FC<StackedBarGraphProps> = ({
       .attr("height", dimensions.height)
       .attr("viewbox", [0, 0, dimensions.width, dimensions.height]);
 
-    const stack = d3.stack().keys(keys).order(d3.stackOrderReverse)(
-      data
-    );
+    const stack = d3.stack().keys(keys).order(d3.stackOrderReverse)(data);
 
-    const values = Object.values(stack[0]);
-    const valuesMapD1 = values.map((d) => (d[1] ? d[1] : 0));
-    const max = Math.max(...valuesMapD1);
+    const values = Object.values(stack[0]).map((d) => (d[1] ? d[1] : 0));
+
+    const max = Math.max(...values);
 
     const { margin, maxWidth, height, width, yScale } = createY(
       dimensions,
       max,
       graph
+    );
+
+    const colorScale = scaleOrdinal(
+      data.map((d) => d.name),
+      color
     );
 
     const xScale = d3
@@ -98,7 +75,7 @@ export const StackedBarGraph: FC<StackedBarGraphProps> = ({
       .data(stack)
       .enter()
       .append("g")
-      .attr("fill", (d) => String(color(d.key)));
+      .attr("fill", (d) => String(colorScale(d.key)));
     group
       .selectAll(".bar")
       .data((d) => d)
@@ -111,10 +88,5 @@ export const StackedBarGraph: FC<StackedBarGraphProps> = ({
       .attr("height", (d) => height - yScale(d[1]));
   }, [color, data, dimensions, headers]);
 
-  return (
-    <>
-      <svg ref={legendRef} />
-      <svg ref={graphRef} />
-    </>
-  );
+  return <svg ref={graphRef} />;
 };

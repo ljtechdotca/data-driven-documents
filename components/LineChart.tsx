@@ -1,5 +1,5 @@
 import { createAxis, createY } from "@lib/helpers";
-import { Dimensions, Headers } from "@types";
+import { Headers, PlotDimensions } from "@types";
 import { line, scaleTime, select, timeParse } from "d3";
 import { FC, useEffect, useRef } from "react";
 
@@ -9,7 +9,7 @@ interface LineChartProps {
     date: string;
     value: number;
   }[];
-  dimensions: Dimensions;
+  dimensions: PlotDimensions;
   headers: Headers;
 }
 
@@ -29,8 +29,8 @@ export const LineChart: FC<LineChartProps> = ({
       date: parseTime(d.date as string) as Date,
       value: Number(d.value) || 0,
     }));
-    const max = Math.max(...data.map((d) => d.value));
 
+    const max = Math.max(...data.map((d) => d.value));
     const { margin, maxWidth, height, width, yScale } = createY(
       dimensions,
       max,
