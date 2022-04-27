@@ -82,7 +82,7 @@ export const ScatterPlot: FC<ScatterPlotProps> = ({
       .attr("transform", (d) => `translate(${xScale(d.x)}, ${yScale(d.y)})`)
       .attr("fill", (d) => colorScale(d.category))
       .attr("d", (d) => String(shape(d.category)));
-  }, []);
+  }, [color, data, dimensions, headers]);
 
   return <svg ref={graphRef} />;
 };

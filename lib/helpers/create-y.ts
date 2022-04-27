@@ -1,8 +1,8 @@
-import { Dimensions, Margin } from "@types";
+import { Margin, PlotDimensions } from "@types";
 import { axisLeft, scaleLinear } from "d3";
 
 export const createY = (
-  dimensions: Dimensions,
+  dimensions: PlotDimensions,
   max: number,
   svg: d3.Selection<SVGSVGElement | null, unknown, null, undefined>
 ) => {
@@ -22,7 +22,6 @@ export const createY = (
   };
   const width = dimensions.width - margin.left - margin.right;
   const height = dimensions.height - margin.top - margin.bottom;
-
 
   return {
     height,

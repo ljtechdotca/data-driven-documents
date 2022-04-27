@@ -86,7 +86,7 @@ export const StackedBarGraph: FC<StackedBarGraphProps> = ({
       .attr("y", (d) => yScale(d[1]))
       .attr("width", (d) => xScale.bandwidth())
       .attr("height", (d) => height - yScale(d[1]));
-  }, [color, data, dimensions, headers]);
+  }, [color, data, dimensions, headers, keys]);
 
   return <svg ref={graphRef} />;
 };
